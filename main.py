@@ -26,8 +26,8 @@ if not admin_user:
     }
     users_collection.insert_one(admin_data)
 
-# Streamlit sign-in page
-def sign_in_page():
+# Streamlit sign-in form
+def sign_in():
     st.title("Sign In")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -42,8 +42,8 @@ def sign_in_page():
             st.error("Invalid username or password. Please try again.")
             return False
 
-# Streamlit sign-up page
-def sign_up_page():
+# Streamlit sign-up form
+def sign_up():
     st.title("Sign Up")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -61,40 +61,69 @@ def sign_up_page():
         else:
             st.error("Passwords do not match. Please try again.")
 
-# Streamlit user page
-def user_page():
-    st.title("User Page")
-    st.write("Welcome, User!")
-    # Add user functionalities here
+# Streamlit job listings
+def job_listings():
+    st.title("Job Listings")
+    jobs = jobs_collection.find()
+    job_data = []
+    for job in jobs:
+        job_data.append({
+            "Title": job["title"],
+            "Company": job["company"],
+            "Location": job["location"],
+            "Description": job["description"]
+        })
+    
+    st.table(job_data)
 
-# Streamlit admin page
-def admin_page():
-    st.title("Admin Page")
-    st.write("Welcome, Admin!")
-    # Add admin functionalities here
+# Admin interface to post job listings
+def post_job():
+    st.title("Post Job Listing")
+    title = st.text_input("Title")
+    company = st.text_input("Company")
+    location = st.text_input("Location")
+    description = st.text_area("Description")
+    if st.button("Post Job"):
+        job_data = {
+            "title": title,
+            "company": company,
+            "location": location,
+            "description": description
+        }
+        jobs_collection.insert_one(job_data)
+        st.success("Job listing posted successfully!")
 
-# Main function to handle navigation
+# Function to sign out
+def sign_out():
+    st.session_state.user_id = None
+    st.session_state.role = None
+
+# Main function
 def main():
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Sign In", "Sign Up", "User", "Admin"])
+    if "user_id" not in st.session_state:
+        page = st.sidebar.radio("Go to", ["Sign In", "Sign Up"])
+    else:
+        st.sidebar.button("Sign Out", on_click=sign_out)
+        if st.session_state.role == "admin":
+            page = st.sidebar.radio("Go to", ["Job Listings", "Post Job"])
+        else:
+            page = st.sidebar.radio("Go to", ["Job Listings"])
 
     if page == "Sign In":
-        if sign_in_page():
+        if sign_in():
             st.experimental_rerun()
     elif page == "Sign Up":
-        sign_up_page()
-    elif page == "User":
+        sign_up()
+    elif page == "Job Listings":
+        job_listings()
+    elif page == "Post Job":
         if "user_id" not in st.session_state:
-            st.error("Please sign in to access user page.")
-        else:
-            user_page()
-    elif page == "Admin":
-        if "user_id" not in st.session_state:
-            st.error("Please sign in to access admin page.")
+            st.error("Please sign in to post job listings.")
         elif st.session_state.role != "admin":
             st.error("You don't have permission to access this page.")
         else:
-            admin_page()
+            post_job()
 
 if __name__ == "__main__":
     main()
