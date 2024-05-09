@@ -72,7 +72,7 @@ def job_listings():
             "Company": job["company"],
             "Location": job["location"],
             "Description": job["description"],
-            "Apply Link": job["apply_link"]  # Added apply link field
+            "Apply Link": job.get("apply_link", "")  # Added apply link field
         })
     
     # Display job listings in a table
@@ -86,15 +86,25 @@ def job_listings():
             st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)  # Open apply link in new tab
     
         st.write("---")  # Add a separator between job listings
-        if st.button("Post Job"):
-            job_data = {
+
+# Admin interface to post job listings
+def post_job():
+    st.title("Post Job Listing")
+    title = st.text_input("Title")
+    company = st.text_input("Company")
+    location = st.text_input("Location")
+    description = st.text_area("Description")
+    apply_link = st.text_input("Apply Link")  # Add input field for apply link
+    if st.button("Post Job"):
+        job_data = {
             "title": title,
             "company": company,
             "location": location,
-            "description": description
-            }
-            jobs_collection.insert_one(job_data)
-            st.success("Job listing posted successfully!")
+            "description": description,
+            "apply_link": apply_link  # Include apply link in job data
+        }
+        jobs_collection.insert_one(job_data)
+        st.success("Job listing posted successfully!")
 
 
 # Function to sign out
