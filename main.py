@@ -36,7 +36,7 @@ def sign_in():
         if user and pbkdf2_sha256.verify(password, user["password"]):
             st.success("You have successfully signed in!")
             st.session_state.user_id = user["_id"]
-            st.session_state.role = user["role"]
+            st.session_state.role = user["role"]  # Initialize role in session state
             return True
         else:
             st.error("Invalid username or password. Please try again.")
