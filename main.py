@@ -64,6 +64,10 @@ def job_listings():
         if job['Apply Link']:
             st.write(f"**Apply Link:** [{job['Apply Link']}]({job['Apply Link']})")
             st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)
+        if st.session_state.role == "admin":
+            if st.button("Remove Job"):
+                jobs_collection.delete_one({"title": job["Title"]})
+                st.success("Job listing removed successfully.")
         st.write("---")
 
 # Streamlit sign-up form
