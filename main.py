@@ -65,31 +65,11 @@ def job_listings():
             st.write(f"**Apply Link:** [{job['Apply Link']}]({job['Apply Link']})")
             st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)
         if st.session_state.role == "admin":
-            if st.button("Remove Job"):
+            remove_button_key = f"remove_button_{job['Title']}"  # Unique key for each remove button
+            if st.button("Remove Job", key=remove_button_key):
                 jobs_collection.delete_one({"title": job["Title"]})
                 st.success("Job listing removed successfully.")
         st.write("---")
-def post_job():
-  st.title("Post Job Listing")
-  title = st.text_input("Title")
-  company = st.text_input("Company")
-  location = st.text_input("Location")
-  description = st.text_area("Description")
-  apply_link = st.text_input("Apply Link") # Add input field for apply link
-  if st.button("Post Job"):
-    job_data = {
-      "title": title,
-      "company": company,
-      "location": location,
-      "description": description,
-      "apply_link": apply_link # Include apply link in job data
-    }
-    jobs_collection.insert_one(job_data)
-    st.success("Job listing posted successfully!")
-
-        
-        
-        
 
 # Streamlit sign-up form
 def sign_up():
@@ -115,6 +95,25 @@ def sign_out():
     st.session_state.user_id = None
     st.session_state.role = None
 
+# Function to post job
+def post_job():
+    st.title("Post Job Listing")
+    title = st.text_input("Title")
+    company = st.text_input("Company")
+    location = st.text_input("Location")
+    description = st.text_area("Description")
+    apply_link = st.text_input("Apply Link")  # Add input field for apply link
+    if st.button("Post Job"):
+        job_data = {
+            "title": title,
+            "company": company,
+            "location": location,
+            "description": description,
+            "apply_link": apply_link  # Include apply link in job data
+        }
+        jobs_collection.insert_one(job_data)
+        st.success("Job listing posted successfully!")
+
 # Main function
 def main():
     st.title("JOBS LISTING PORTAL")
@@ -134,6 +133,13 @@ def main():
 
     if page == "Job Listings":
         job_listings()
+    elif page == "Post Job":
+        if "user_id" not in st.session_state:
+            st.error("Please sign in to post job listings.")
+        elif st.session_state.role != "admin":
+            st.error("You don't have permission to access this page.")
+        else:
+            post_job()
 
 if __name__ == "__main__":
     main()
