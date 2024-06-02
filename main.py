@@ -42,6 +42,30 @@ def sign_in():
             st.error("Invalid username or password. Please try again.")
             return False
 
+# Streamlit job listings
+def job_listings():
+    st.title("Job Listings")
+    jobs = jobs_collection.find()
+    job_data = []
+    for job in jobs:
+        job_data.append({
+            "Title": job["title"],
+            "Company": job["company"],
+            "Location": job["location"],
+            "Description": job["description"],
+            "Apply Link": job.get("apply_link", "")
+        })
+
+    for job in job_data:
+        st.write(f"**Title:** {job['Title']}")
+        st.write(f"**Company:** {job['Company']}")
+        st.write(f"**Location:** {job['Location']}")
+        st.write(f"**Description:** {job['Description']}")
+        if job['Apply Link']:
+            st.write(f"**Apply Link:** [{job['Apply Link']}]({job['Apply Link']})")
+            st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)
+        st.write("---")
+
 # Streamlit sign-up form
 def sign_up():
     st.title("Sign Up")
@@ -54,58 +78,12 @@ def sign_up():
             user_data = {
                 "username": username,
                 "password": hashed_password,
-                "role": "user"  # Default role for new users
+                "role": "user"
             }
             users_collection.insert_one(user_data)
             st.success("You have successfully signed up! Please sign in.")
         else:
             st.error("Passwords do not match. Please try again.")
-
-# Streamlit job listings
-def job_listings():
-    st.title("Job Listings")
-    jobs = jobs_collection.find()
-    job_data = []
-    for job in jobs:
-        job_data.append({
-            "Title": job["title"],
-            "Company": job["company"],
-            "Location": job["location"],
-            "Description": job["description"],
-            "Apply Link": job.get("apply_link", "")  # Added apply link field
-        })
-    
-    # Display job listings in a table
-    for job in job_data:
-        st.write(f"**Title:** {job['Title']}")
-        st.write(f"**Company:** {job['Company']}")
-        st.write(f"**Location:** {job['Location']}")
-        st.write(f"**Description:** {job['Description']}")
-        if job['Apply Link']:
-            st.write(f"**Apply Link:** [{job['Apply Link']}]({job['Apply Link']})")  # Make apply link clickable
-            st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)  # Open apply link in new tab
-    
-        st.write("---")  # Add a separator between job listings
-
-# Admin interface to post job listings
-def post_job():
-    st.title("Post Job Listing")
-    title = st.text_input("Title")
-    company = st.text_input("Company")
-    location = st.text_input("Location")
-    description = st.text_area("Description")
-    apply_link = st.text_input("Apply Link")  # Add input field for apply link
-    if st.button("Post Job"):
-        job_data = {
-            "title": title,
-            "company": company,
-            "location": location,
-            "description": description,
-            "apply_link": apply_link  # Include apply link in job data
-        }
-        jobs_collection.insert_one(job_data)
-        st.success("Job listing posted successfully!")
-
 
 # Function to sign out
 def sign_out():
@@ -117,7 +95,11 @@ def main():
     st.title("JOBS LISTING PORTAL")
     st.sidebar.title("Navigation")
     if "user_id" not in st.session_state:
-        page = st.sidebar.radio("Go to", ["Sign In", "Sign Up"])
+        page = st.sidebar.radio("Go to", ["Job Listings", "Sign Up", "Sign In"])
+        if page == "Sign In":
+            sign_in()
+        elif page == "Sign Up":
+            sign_up()
     else:
         st.sidebar.button("Sign Out", on_click=sign_out)
         if st.session_state.role == "admin":
@@ -125,20 +107,8 @@ def main():
         else:
             page = st.sidebar.radio("Go to", ["Job Listings"])
 
-    if page == "Sign In":
-        if sign_in():
-            st.experimental_rerun()
-    elif page == "Sign Up":
-        sign_up()
-    elif page == "Job Listings":
+    if page == "Job Listings":
         job_listings()
-    elif page == "Post Job":
-        if "user_id" not in st.session_state:
-            st.error("Please sign in to post job listings.")
-        elif st.session_state.role != "admin":
-            st.error("You don't have permission to access this page.")
-        else:
-            post_job()
 
 if __name__ == "__main__":
     main()
