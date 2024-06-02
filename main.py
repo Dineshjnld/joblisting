@@ -83,7 +83,7 @@ def job_listings():
         if job['Apply Link']:
             st.write(f"**Apply Link:** [{job['Apply Link']}]({job['Apply Link']})")
             st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)
-        if st.session_state.role == "admin":
+        if "role" in st.session_state and st.session_state.role == "admin":
             remove_button_key = f"remove_button_{job['Title']}"  # Unique key for each remove button
             if st.button("Remove Job", key=remove_button_key):
                 jobs_collection.delete_one({"title": job["Title"]})
@@ -137,7 +137,7 @@ def main():
     elif page == "Post Job":
         if "user_id" not in st.session_state:
             st.error("Please sign in to post job listings.")
-        elif st.session_state.role != "admin":
+        elif "role" not in st.session_state or st.session_state.role != "admin":
             st.error("You don't have permission to access this page.")
         else:
             post_job()
