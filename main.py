@@ -69,6 +69,27 @@ def job_listings():
                 jobs_collection.delete_one({"title": job["Title"]})
                 st.success("Job listing removed successfully.")
         st.write("---")
+def post_job():
+  st.title("Post Job Listing")
+  title = st.text_input("Title")
+  company = st.text_input("Company")
+  location = st.text_input("Location")
+  description = st.text_area("Description")
+  apply_link = st.text_input("Apply Link") # Add input field for apply link
+  if st.button("Post Job"):
+    job_data = {
+      "title": title,
+      "company": company,
+      "location": location,
+      "description": description,
+      "apply_link": apply_link # Include apply link in job data
+    }
+    jobs_collection.insert_one(job_data)
+    st.success("Job listing posted successfully!")
+
+        
+        
+        
 
 # Streamlit sign-up form
 def sign_up():
