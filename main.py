@@ -114,6 +114,7 @@ def sign_out():
 
 # Main function
 def main():
+    st.title("JOBS LISTING PORTAL")
     st.sidebar.title("Navigation")
     if "user_id" not in st.session_state:
         page = st.sidebar.radio("Go to", ["Sign In", "Sign Up"])
