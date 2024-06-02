@@ -36,11 +36,30 @@ def sign_in():
         if user and pbkdf2_sha256.verify(password, user["password"]):
             st.success("You have successfully signed in!")
             st.session_state.user_id = user["_id"]
-            st.session_state.role = user.get("role", "user")  # Initialize role attribute with default value
+            st.session_state.role = user["role"]
             return True
         else:
             st.error("Invalid username or password. Please try again.")
             return False
+
+# Streamlit sign-up form
+def sign_up():
+    st.title("Sign Up")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
+    if st.button("Sign Up"):
+        if password == confirm_password:
+            hashed_password = pbkdf2_sha256.hash(password)
+            user_data = {
+                "username": username,
+                "password": hashed_password,
+                "role": "user"  # Default role for new users
+            }
+            users_collection.insert_one(user_data)
+            st.success("You have successfully signed up! Please sign in.")
+        else:
+            st.error("Passwords do not match. Please try again.")
 
 # Streamlit job listings
 def job_listings():
@@ -53,7 +72,7 @@ def job_listings():
             "Company": job["company"],
             "Location": job["location"],
             "Description": job["description"],
-            "Apply Link": job.get("apply_link", "")
+            "Apply Link": job.get("apply_link", ""),
         })
 
     for job in job_data:
@@ -71,31 +90,7 @@ def job_listings():
                 st.success("Job listing removed successfully.")
         st.write("---")
 
-# Streamlit sign-up form
-def sign_up():
-    st.title("Sign Up")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    confirm_password = st.text_input("Confirm Password", type="password")
-    if st.button("Sign Up"):
-        if password == confirm_password:
-            hashed_password = pbkdf2_sha256.hash(password)
-            user_data = {
-                "username": username,
-                "password": hashed_password,
-                "role": "user"
-            }
-            users_collection.insert_one(user_data)
-            st.success("You have successfully signed up! Please sign in.")
-        else:
-            st.error("Passwords do not match. Please try again.")
-
-# Function to sign out
-def sign_out():
-    st.session_state.user_id = None
-    st.session_state.role = None
-
-# Function to post job
+# Streamlit post job (admin only)
 def post_job():
     st.title("Post Job Listing")
     title = st.text_input("Title")
@@ -114,22 +109,28 @@ def post_job():
         jobs_collection.insert_one(job_data)
         st.success("Job listing posted successfully!")
 
+# Function to sign out
+def sign_out():
+    st.session_state.user_id = None
+    st.session_state.role = None
+
 # Main function
 def main():
     st.title("JOBS LISTING PORTAL")
     st.sidebar.title("Navigation")
-    if "user_id" not in st.session_state:
+
+    # Initialize role in session state after successful sign-in
+    if "user_id" in st.session_state and "role" in st.session_state:
+        if st.session_state.role == "admin":
+            page = st.sidebar.radio("Go to", ["Job Listings", "Post Job"])
+        else:
+            page = st.sidebar.radio("Go to", ["Job Listings"])
+    else:
         page = st.sidebar.radio("Go to", ["Job Listings", "Sign Up", "Sign In"])
         if page == "Sign In":
             sign_in()
         elif page == "Sign Up":
             sign_up()
-    else:
-        st.sidebar.button("Sign Out", on_click=sign_out)
-        if st.session_state.role == "admin":
-            page = st.sidebar.radio("Go to", ["Job Listings", "Post Job"])
-        else:
-            page = st.sidebar.radio("Go to", ["Job Listings"])
 
     if page == "Job Listings":
         job_listings()
