@@ -64,7 +64,12 @@ def sign_up():
 # Streamlit job listings
 def job_listings():
     st.title("Job Listings")
-    jobs = jobs_collection.find()
+    search_title = st.text_input("Search by Job Title")
+    if search_title:
+        jobs = jobs_collection.find({"title": {"$regex": search_title, "$options": "i"}})
+    else:
+        jobs = jobs_collection.find()
+    
     job_data = []
     for job in jobs:
         job_data.append({
@@ -89,6 +94,7 @@ def job_listings():
                 jobs_collection.delete_one({"title": job["Title"]})
                 st.success("Job listing removed successfully.")
         st.write("---")
+        
 
 # Streamlit post job (admin only)
 def post_job():
