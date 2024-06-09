@@ -6,6 +6,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -48,10 +49,9 @@ def sign_in():
             st.success("You have successfully signed in!")
             st.session_state.user_id = user["_id"]
             st.session_state.role = user["role"]  # Initialize role in session state
-            return True
+            st.experimental_rerun()  # Redirect to job listings page after sign-in
         else:
             st.error("Invalid username or password. Please try again.")
-            return False
 
 # Streamlit sign-up form
 def sign_up():
@@ -71,21 +71,25 @@ def sign_up():
             }
             users_collection.insert_one(user_data)
             st.success("You have successfully signed up! Please sign in.")
+            # st.button("Sign In", on_click=sign_in)  # Add sign-in button after successful sign-up
         else:
             st.error("Passwords do not match. Please try again.")
 
+# Streamlit job listings
 # Streamlit job listings
 def job_listings():
     st.title("Job Listings")
     search_title = st.text_input("Search by Job Title")
     if search_title:
-        jobs = jobs_collection.find({"title": {"$regex": search_title, "$options": "i"}})
+        jobs = jobs_collection.find({"title": {"$regex": search_title, "$options": "i"}}).sort("timestamp", -1)
     else:
-        jobs = jobs_collection.find()
+        jobs = jobs_collection.find().sort("timestamp", -1)  # Sort in descending order
+    
     
     job_data = []
     for job in jobs:
         job_data.append({
+            "ID": job["_id"],  # Store ObjectId instead of converting to string
             "Title": job["title"],
             "Company": job["company"],
             "Location": job["location"],
@@ -102,12 +106,14 @@ def job_listings():
             st.write(f"**Apply Link:** [{job['Apply Link']}]({job['Apply Link']})")
             st.markdown("<a href='" + job['Apply Link'] + "' target='_blank'>Apply</a>", unsafe_allow_html=True)
         if "role" in st.session_state and st.session_state.role == "admin":
-            remove_button_key = f"remove_button_{job['Title']}"  # Unique key for each remove button
+            remove_button_key = f"remove_button_{job['ID']}"  # Use job ID directly
             if st.button("Remove Job", key=remove_button_key):
-                jobs_collection.delete_one({"title": job["Title"]})
+                jobs_collection.delete_one({"_id": job["ID"]})  # Use ObjectId directly
                 st.success("Job listing removed successfully.")
         st.write("---")
-        
+
+
+
 
 # Streamlit post job (admin only)
 def post_job():
@@ -123,7 +129,8 @@ def post_job():
             "company": company,
             "location": location,
             "description": description,
-            "apply_link": apply_link  # Include apply link in job data
+            "apply_link": apply_link,  # Include apply link in job data
+            "timestamp": datetime.utcnow()  # Add timestamp
         }
         jobs_collection.insert_one(job_data)
         st.success("Job listing posted successfully!")
@@ -173,8 +180,9 @@ def send_job_notification(title, company, location, description, apply_link):
 
 # Function to sign out
 def sign_out():
-    st.session_state.user_id = None
-    st.session_state.role = None
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()  # Redirect to job listings page after sign-out
 
 # Main function
 def main():
@@ -184,15 +192,18 @@ def main():
     # Initialize role in session state after successful sign-in
     if "user_id" in st.session_state and "role" in st.session_state:
         if st.session_state.role == "admin":
-            page = st.sidebar.radio("Go to", ["Job Listings", "Post Job"])
+            page = st.sidebar.radio("Go to", ["Job Listings", "Post Job", "Sign Out"])
         else:
-            page = st.sidebar.radio("Go to", ["Job Listings"])
+            page = st.sidebar.radio("Go to", ["Job Listings", "Sign Out"])
     else:
         page = st.sidebar.radio("Go to", ["Job Listings", "Sign Up", "Sign In"])
-        if page == "Sign In":
-            sign_in()
-        elif page == "Sign Up":
-            sign_up()
+
+    if page == "Sign In":
+        sign_in()
+    elif page == "Sign Up":
+        sign_up()
+    elif page == "Sign Out":
+        sign_out()
 
     if page == "Job Listings":
         job_listings()
