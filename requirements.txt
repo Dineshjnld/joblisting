@@ -1,9 +1,6 @@
-streamlit==0.89.0
-pymongo==3.12.0
-passlib==1.7.4
+streamlit
+pymongo
+passlib
 dotenv
-email==7.0.0
-python-dotenv==0.19.1
-
-
-
+email
+python-dotenv
