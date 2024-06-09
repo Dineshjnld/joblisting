@@ -2,9 +2,20 @@ import os
 import streamlit as st
 from pymongo import MongoClient
 from passlib.hash import pbkdf2_sha256
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Get MongoDB connection string from environment variable
-MONGODB_CONNECTION_STRING = os.environ.get("MONGODB_CONNECTION_STRING")
+MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING")
+
+# Email configuration
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 # Connect to MongoDB cluster
 client = MongoClient(MONGODB_CONNECTION_STRING)
@@ -46,6 +57,7 @@ def sign_in():
 def sign_up():
     st.title("Sign Up")
     username = st.text_input("Username")
+    email = st.text_input("Email")
     password = st.text_input("Password", type="password")
     confirm_password = st.text_input("Confirm Password", type="password")
     if st.button("Sign Up"):
@@ -53,6 +65,7 @@ def sign_up():
             hashed_password = pbkdf2_sha256.hash(password)
             user_data = {
                 "username": username,
+                "email": email,
                 "password": hashed_password,
                 "role": "user"  # Default role for new users
             }
@@ -114,6 +127,49 @@ def post_job():
         }
         jobs_collection.insert_one(job_data)
         st.success("Job listing posted successfully!")
+        send_job_notification(title, company, location, description, apply_link)  # Call email sending function
+
+# Function to send job notification email to all users
+def send_job_notification(title, company, location, description, apply_link):
+    # Fetch user emails only for documents with an "email" field
+    user_emails = [user["email"] for user in users_collection.find({"email": {"$exists": True}})]
+
+    # Create message container
+    message = MIMEMultipart()
+    message["From"] = SENDER_EMAIL
+    message["Subject"] = f"New Job Posted: {title} at {company}"
+
+    # Add body to email
+    body = f"""
+    Hello,
+
+    A new job has been posted on our job portal:
+
+    Title: {title}
+    Company: {company}
+    Location: {location}
+    Description: {description}
+    Apply Link: {apply_link}
+
+    Check it out and apply if interested!
+
+    Best regards,
+    Truinfo.live,
+    https://truinfo.live/
+    """
+    message.attach(MIMEText(body, "plain"))
+
+    # Send email to each user
+    for email in user_emails:
+        try:
+            server = smtplib.SMTP("smtp.gmail.com", 587)
+            server.starttls()
+            server.login(SENDER_EMAIL, EMAIL_PASSWORD)
+            server.sendmail(SENDER_EMAIL, email, message.as_string())
+            server.quit()
+            st.success(f"Notification email sent to {email}")
+        except Exception as e:
+            st.error(f"Failed to send email to {email}: {str(e)}")
 
 # Function to sign out
 def sign_out():
