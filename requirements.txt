@@ -1,6 +1,5 @@
 streamlit
 pymongo
 passlib
-dotenv
 email
 python-dotenv
