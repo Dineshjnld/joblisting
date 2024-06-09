@@ -5,11 +5,10 @@ from passlib.hash import pbkdf2_sha256
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from dotenv import load_dotenv
 from datetime import datetime
 
-# Load environment variables from .env file
-load_dotenv()
+# # Load environment variables from .env file
+# load_dotenv()
 
 # Get MongoDB connection string from environment variable
 MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING")
