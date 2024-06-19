@@ -1,6 +1,6 @@
 passlib
 python-dotenv
-google-generativeai
+google-generative-ai
 streamlit
 pymongo
 email
