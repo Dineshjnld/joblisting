@@ -1,5 +1,9 @@
-streamlit
-pymongo
 passlib
 python-dotenv
 google-generativeai
+streamlit
+pymongo
+email
+datetime
+PyPDF2
+plotly
