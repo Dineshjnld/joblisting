@@ -2,3 +2,4 @@ streamlit
 pymongo
 passlib
 python-dotenv
+google-generativeai
