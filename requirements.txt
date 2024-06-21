@@ -1,7 +1,6 @@
+streamlit
 passlib
 python-dotenv
-google-generative-ai
-streamlit
 pymongo
 email
 datetime
