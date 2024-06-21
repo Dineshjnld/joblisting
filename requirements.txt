@@ -1,8 +1,4 @@
 streamlit
+pymongo
 passlib
 python-dotenv
-pymongo
-email
-datetime
-PyPDF2
-plotly
