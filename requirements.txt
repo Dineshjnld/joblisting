@@ -1,7 +1,6 @@
 pymongo
 passlib
 python-dotenv
-PyPDF2
 google-generativeai
-plotly
+
 
